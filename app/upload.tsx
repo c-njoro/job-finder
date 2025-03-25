@@ -1,8 +1,9 @@
+import { readDocxFile } from "@/assets/fileHandler";
 import AppGradient from "@/components/AppGradient";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 type Document = {
@@ -17,7 +18,7 @@ export default function UploadScreen() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
   );
-  const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [extractedText, setExtractedText] = useState<string>("");
 
   const pickDocument = async () => {
     try {
@@ -32,6 +33,11 @@ export default function UploadScreen() {
       }
 
       const document = result.assets[0];
+      if (!document.name.endsWith(".docx")) {
+        Alert.alert("Unsupported format", "Only DOCX files are allowed");
+        return;
+      }
+
       setSelectedDocument({
         mimeType: document.mimeType || "",
         name: document.name || "",
@@ -39,15 +45,29 @@ export default function UploadScreen() {
         uri: document.uri || "",
       });
 
-      if (!document.name.endsWith(".docx")) {
-        Alert.alert("Unsupported format", "Only DOCX files are allowed");
-      }
-
       console.log("Selected Document: ", document);
     } catch (error) {
       console.error("Error during document upload: ", error);
     }
   };
+
+  useEffect(() => {
+    const extractText = async () => {
+      if (!selectedDocument?.uri) {
+        return;
+      }
+      try {
+        console.log("Extracting text from:", selectedDocument.uri);
+        const text = await readDocxFile(selectedDocument.uri);
+        console.log("Extracted Text:", text);
+        setExtractedText(text);
+      } catch (error) {
+        console.error("Error extracting text:", error);
+      }
+    };
+
+    extractText();
+  }, [selectedDocument]);
 
   return (
     <ScrollView className="flex-1">
@@ -84,7 +104,7 @@ export default function UploadScreen() {
 
         {extractedText && (
           <View>
-            <Text>{extractedText}</Text>
+            <Text>We have the text</Text>
           </View>
         )}
 

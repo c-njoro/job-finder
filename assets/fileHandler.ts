@@ -1,12 +1,11 @@
+import base64 from "base64-js";
 import * as FileSystem from "expo-file-system";
 import mammoth from "mammoth";
 
-// Custom error class for unsupported files
-class UnsupportedFileTypeError extends Error {
-  constructor(fileExtension: string) {
-    super(`Unsupported file type: ${fileExtension}`);
-    this.name = "UnsupportedFileTypeError";
-  }
+// Function to convert Base64 to ArrayBuffer
+function base64ToArrayBuffer(base64String: string): ArrayBuffer {
+  const byteArray = base64.toByteArray(base64String);
+  return byteArray.buffer as ArrayBuffer; // Explicitly cast to ArrayBuffer
 }
 
 // Function to read and extract text from a .docx file
@@ -17,10 +16,15 @@ async function readDocxFile(uri: string): Promise<string> {
       encoding: FileSystem.EncodingType.Base64,
     });
 
+    console.log("File content (base64):", fileContent.substring(0, 100)); // Debug log (print only the first 100 chars)
+
+    // Convert Base64 to ArrayBuffer
+    const arrayBuffer = base64ToArrayBuffer(fileContent);
+    console.log("ArrayBuffer length:", arrayBuffer.byteLength); // Debug log
+
     // Use Mammoth to extract raw text from the .docx file
-    const result = await mammoth.extractRawText({
-      buffer: Buffer.from(fileContent, "base64"),
-    });
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    console.log("Results: ", result.value);
 
     return result.value; // Return the extracted text
   } catch (error) {
@@ -29,4 +33,4 @@ async function readDocxFile(uri: string): Promise<string> {
   }
 }
 
-export { readDocxFile, UnsupportedFileTypeError };
+export { readDocxFile };
