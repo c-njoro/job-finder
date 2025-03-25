@@ -1,6 +1,5 @@
 import AppGradient from "@/components/AppGradient";
 import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
@@ -18,6 +17,7 @@ export default function UploadScreen() {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
   );
+  const [extractedText, setExtractedText] = useState<string | null>(null);
 
   const pickDocument = async () => {
     try {
@@ -39,21 +39,13 @@ export default function UploadScreen() {
         uri: document.uri || "",
       });
 
-      readDocument(document.uri);
+      if (!document.name.endsWith(".docx")) {
+        Alert.alert("Unsupported format", "Only DOCX files are allowed");
+      }
 
       console.log("Selected Document: ", document);
     } catch (error) {
       console.error("Error during document upload: ", error);
-    }
-  };
-  const readDocument = async (uri: string) => {
-    try {
-      const content = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
-      console.log("File Content:", content);
-    } catch (error) {
-      console.error("Error reading file:", error);
     }
   };
 
@@ -89,6 +81,12 @@ export default function UploadScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {extractedText && (
+          <View>
+            <Text>{extractedText}</Text>
+          </View>
+        )}
 
         <StatusBar style="light" />
       </AppGradient>
